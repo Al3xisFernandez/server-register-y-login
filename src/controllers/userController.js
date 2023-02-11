@@ -1,4 +1,7 @@
 const userService = require("../services/userServices");
+const user = require("../model/Model.js");
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET;
 const createNewUser = (req, res) => {
   const { body } = req;
   if (!body.fname || !body.lname || !body.email || !body.password) {
@@ -27,15 +30,34 @@ const createNewUser = (req, res) => {
 };
 
 const userLogin = (req, res) => {
-  const {email, password} = req.body;
-  var user = userService.userLoginService(email, password)
+  const { email, password } = req.body;
+  var user = userService.userLoginService(email, password);
   if (user) {
     res.status(200).send({ status: "OK", data: user });
   } else {
-    res.status(400).send({ status: "FAILED", data: { error: "Invalid Credentials" } });
-  }}
+    res
+      .status(400)
+      .send({ status: "FAILED", data: { error: "Invalid Credentials" } });
+  }
+};
+
+const userDataController = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const users = await userService.userDataService(token);
+    if (users === "Token expired") {
+      return res.json({ status: "error", data: "token expired" });
+    }
+    const data = await userService.getUserDataByEmail(user.email);
+    res.send({ status: "ok", data });
+  } catch (error) {
+    res.send({ status: "error", data: error });
+  }
+};
 
 module.exports = {
   createNewUser,
-  userLogin
+  userLogin,
+  userDataController
 };
